@@ -1,6 +1,13 @@
 // Функция для проверки, является ли число простым
+
+/**
+ * 
+Для оптимизации проверки делимости, вычисляется квадратный корень из num. 
+Если число num не делится на любое число до его квадратного корня,
+ то оно не будет делиться и на числа больше квадратного корня.
+ */
 function isPrime(num) {
-  if (num < 2n) return false;
+  if (num < 2n) return false; //Простые числа начинаются с 2
   const sqrt = BigInt(Math.floor(Math.sqrt(Number(num)))); // Округляем до целого и преобразуем в BigInt
   for (let i = 2n; i <= sqrt; i++) {
     if (num % i === 0n) return false;
@@ -29,6 +36,7 @@ function gcd(a, b) {
   return a;
 }
 // Функция для вычисления обратного по модулю числа
+//Остаток от деления должен равняться 1.
 function modInverseBruteForce(e, phi) {
   for (let d = 1n; d < phi; d++) {
     if ((e * d) % phi === 1n) {
@@ -37,45 +45,14 @@ function modInverseBruteForce(e, phi) {
   }
   throw new Error("No modular inverse exists");
 }
-/*
-Функция для возведения в степень по модулю
-------------------------------------
-base = base % mod; - 
-Этот шаг уменьшает базу до значения, которое находится в диапазоне от 0 до mod−1. 
-Это делается для оптимизации, потому что при вычислении степени по модулю, 
-значение базы можно сразу сократить.
-------------------------------------
-while (exp > 0n)
-Этот цикл выполняется до тех пор, пока показатель степени 
-exp не станет равным 0. 
-Это основной цикл алгоритма, который поэтапно уменьшает показатель, 
-параллельно вычисляя результат.
-------------------------------------
-if (exp % 2n === 1n)
-  result = (result * base) % mod;
-Алгоритм быстрого возведения в степень основан на разложении показателя в двоичное представление. 
-Если текущий показатель exp
-нечетный (остаток от деления на 2 равен 1), то текущая база умножается на результат, 
-и это произведение снова берётся по модулю mod. 
-Это условие отвечает за случаи, когда двоичный разряд показателя равен 1
------------------------------------
-base = (base * base) % mod;
-Независимо от того, был ли показатель чётным или нечетным, 
-база возводится в квадрат, а результат снова берётся по модулю mod
-Возведение базы в квадрат на каждом шаге связано с тем, 
-что мы переходим к следующему разряду в двоичной форме показателя степени.
-*/
-function modPow(base, exp, mod) {
-  let result = 1n;
-  base = base % mod;
-  while (exp > 0n) {
-    if (exp % 2n === 1n)
-      // если exp нечетное
-      result = (result * base) % mod;
-    exp = exp / 2n;
-    base = (base * base) % mod;
+function naiveModPow(base, exp, mod) {
+  let result = 1n; // Инициализируем результат как 1
+  base = base % mod; // Приводим основание к модулю
+  for (let i = 0n; i < exp; i++) {
+    result = (result * base) % mod; // Умножаем результат на основание и берем модуль
   }
-  return result;
+
+  return result; // Возвращаем результат
 }
 
 // Генерация ключей RSA
@@ -87,7 +64,7 @@ function generateKeys() {
   const q = generateRandomPrime(min, max); // Генерация случайного простого числа q
   const n = p * q; // Модуль n
   const phi = (p - 1n) * (q - 1n); // Функция Эйлера
-
+  console.log(phi);
   let e = 3n; // Открытая экспонента
   while (gcd(e, phi) !== 1n) {
     e += 2n;
@@ -104,14 +81,13 @@ function generateKeys() {
 // Шифрование
 function encrypt(message, publicKey) {
   const messageCode = message.split("").map((c) => BigInt(c.charCodeAt(0)));
-  console.log(messageCode);
-  return messageCode.map((m) => modPow(m, publicKey.e, publicKey.n));
+  return messageCode.map((m) => naiveModPow(m, publicKey.e, publicKey.n));
 }
 
 // Дешифрование
 function decrypt(cipher, privateKey) {
   const decryptedCode = cipher.map((c) =>
-    modPow(c, privateKey.d, privateKey.n)
+    naiveModPow(c, privateKey.d, privateKey.n)
   );
   return decryptedCode.map((c) => String.fromCharCode(Number(c))).join("");
 }
