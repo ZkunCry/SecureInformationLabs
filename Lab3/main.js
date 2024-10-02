@@ -64,13 +64,33 @@ const codes = (tree) => {
 
   return result;
 };
-
 const getcodes = (text) => codes(tree(sortps(topairs(freqs(text)))));
-console.log("Исходная строка: ВБВБВАВБАВ");
-const huffmanTree2 = tree(sortps(topairs(freqs("ВБВБВАВБАВ"))));
-console.log(JSON.stringify(huffmanTree2, null, 2));
-console.log("Результат: ", getcodes("ВБВБВАВБАВ"));
-
-console.log("Исходная строка 2: Мама мыла раму");
-console.log("Результат: ", getcodes("Мама мыла раму"));
-const huffmanTree = tree(sortps(topairs(freqs("Мама мыла раму"))));
+let start = performance.now();
+const prettyPrintTree = (node, indent = 0) => {
+  if (node[0] instanceof Array) {
+    // Если узел является массивом, рекурсивно обходим его дочерние узлы
+    console.log(" ".repeat(indent) + "[");
+    prettyPrintTree(node[0][0], indent + 2); // Левый дочерний узел
+    prettyPrintTree(node[0][1], indent + 2); // Правый дочерний узел
+    console.log(" ".repeat(indent) + `] (${node[1]})`); // Частота
+  } else {
+    // Если узел является символом, выводим его
+    console.log(" ".repeat(indent) + `${node[0]} (${node[1]})`);
+  }
+};
+function printInfromation() {
+  const strings = ["ВБВБВАВБАВ", "Мама мыла раму"];
+  strings.forEach((value) => {
+    const start = performance.now();
+    console.log(`Исходная строка: ${value}`);
+    console.log("Дерево: ");
+    const huffmanTree = tree(sortps(topairs(freqs(value))));
+    prettyPrintTree(huffmanTree);
+    // console.log(JSON.stringify(huffmanTree, null, 2));
+    console.log(`Коды символов:`);
+    console.log(codes(huffmanTree));
+    const end = performance.now();
+    console.log(`Время выполнения кода: ${end - start} `);
+  });
+}
+printInfromation();
