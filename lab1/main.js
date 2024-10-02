@@ -20,6 +20,7 @@ function hammingEncode(data) {
       data = data.slice(1);
     }
   }
+  console.log(hammingCode);
 
   // Вычисление контрольных битов
   for (let i = 0; i < r; i++) {
@@ -47,6 +48,11 @@ function hammingDecode(hammingCode) {
   }
 
   // Вычисление синдромов
+  /* Позиция ошибки = Синдром1 * 1 + Синдром2 * 2 + Синдром4 * 4
+               = 1 * 1 + 1 * 2 + 1 * 4
+               = 1 + 2 + 4
+               = 7
+               */
   let errorPos = 0;
   for (let i = 0; i < r; i++) {
     let pos = Math.pow(2, i);
@@ -99,9 +105,9 @@ function introduceError(hammingCode, numErrors = 1) {
 }
 
 // Пример использования
-let data = "0100010000111101"; // Исходное сообщение
+let data = "1"; // Исходное сообщение
 let encodedData = hammingEncode(data);
-console.log(`Кодовое сообщение: ${encodedData}`);
+console.log(`Закодированное сообщение: ${encodedData}`);
 
 // Внесение одной ошибки
 let { hammingCodeWithErrors, errorPositions } = introduceError(encodedData);
@@ -113,3 +119,21 @@ console.log(
 let { originalData, correctedData } = hammingDecode(hammingCodeWithErrors);
 console.log(`Исправленное сообщение: ${correctedData}`);
 console.log(`Исходное сообщение: ${originalData}`);
+
+data = "0011111001001000";
+encodedData = hammingEncode(data);
+console.log(`Второе закодированное сообщение: ${encodedData}`);
+
+// Внесение одной ошибки
+let obj = introduceError(encodedData);
+hammingCodeWithErrors = obj.hammingCodeWithErrors;
+errorPositions = obj.errorPositions;
+console.log(
+  `Сообщение с ошибкой в позиции ${errorPositions}: ${hammingCodeWithErrors}`
+);
+
+// Декодирование и исправление
+let decodedData2 = hammingDecode(hammingCodeWithErrors);
+
+console.log(`Исправленное сообщение: ${decodedData2.correctedData}`);
+console.log(`Исходное сообщение: ${decodedData2.originalData}`);
