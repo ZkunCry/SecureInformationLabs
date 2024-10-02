@@ -1,96 +1,105 @@
-//Подсчет частоты символов
-/**
- *
- * @param {string} text - Исходный текст
- * @returns {object}  {"М":1,"а":4,"м":3," ":2,"ы":1,"л":1,"р":1,"у":1} - пример объекта
- *
- */
+// Подсчет частоты символов
 const freqs = (text) =>
   [...text].reduce(
     (fs, c) => (fs[c] ? ((fs[c] = fs[c] + 1), fs) : ((fs[c] = 1), fs)),
     {}
   );
-/**
- * Преобразование частот в пары
- * @param {object} freqs - Объект частот
- * @returns {Array} - Возвращает массив, состоящий из пар символ-частота, например
- * "[["М",1],["а",4],["м",3],[" ",2],["ы",1],["л",1],["р",1],["у",1]]"
- */
+
+// Преобразование частот в пары
 const topairs = (freqs) => Object.keys(freqs).map((c) => [c, freqs[c]]);
-/**
- * Сортировка пар по частоте
- * @param {Array} pairs
- * @returns
- */
+
+// Сортировка пар по частоте
 const sortps = (pairs) => pairs.sort((a, b) => a[1] - b[1]);
-/**
- * Построение кодового дерева
- * @param {*} ps
- * @returns  [[[[[[["у",1],[[["л",1],["р",1]],2]],3],["м",3]],6],
- *           [[[[[[["М",1],["ы",1]],2],[" ",2]],4],["а",4]],8]],14]
- */
+
+// Построение кодового дерева
 const tree = (ps) => {
   while (ps.length >= 2) {
-    // Сортируем и объединяем первые два элемента
     ps = sortps([[ps.slice(0, 2), ps[0][1] + ps[1][1]]].concat(ps.slice(2)));
   }
-
-  // Возвращаем единственный оставшийся элемент
   return ps[0];
 };
-/**
- * Преобразование дерева в таблицу кодов
- * @param {*} tree
- * @param {*} pfx
- * @returns
- */
+
+// Преобразование дерева в таблицу кодов
 const codes = (tree) => {
   const result = {};
-  const stack = [[tree, ""]]; // Стек содержит пары: узел дерева и текущий префикс
-
+  const stack = [[tree, ""]];
   while (stack.length > 0) {
-    const [node, pfx] = stack.pop(); // Извлекаем текущий узел и префикс
-
-    // Если узел является массивом (внутренний узел дерева)
+    const [node, pfx] = stack.pop();
     if (Array.isArray(node[0])) {
-      // Добавляем левый и правый узлы в стек с обновленными префиксами
-      stack.push([node[0][1], pfx + "1"]); // Правое поддерево с префиксом "1"
-      stack.push([node[0][0], pfx + "0"]); // Левое поддерево с префиксом "0"
+      stack.push([node[0][1], pfx + "1"]);
+      stack.push([node[0][0], pfx + "0"]);
     } else {
-      // Если узел - это лист дерева, сохраняем код для него
       result[node[0]] = pfx;
     }
   }
-
   return result;
 };
-const getcodes = (text) => codes(tree(sortps(topairs(freqs(text)))));
-let start = performance.now();
-const prettyPrintTree = (node, indent = 0) => {
-  if (node[0] instanceof Array) {
-    // Если узел является массивом, рекурсивно обходим его дочерние узлы
-    console.log(" ".repeat(indent) + "[");
-    prettyPrintTree(node[0][0], indent + 2); // Левый дочерний узел
-    prettyPrintTree(node[0][1], indent + 2); // Правый дочерний узел
-    console.log(" ".repeat(indent) + `] (${node[1]})`); // Частота
-  } else {
-    // Если узел является символом, выводим его
-    console.log(" ".repeat(indent) + `${node[0]} (${node[1]})`);
-  }
+
+// Кодирование сообщения с помощью кодов Хаффмана
+const encodeMessage = (text, codes) => {
+  return text
+    .split("")
+    .map((char) => codes[char])
+    .join("");
 };
-function printInfromation() {
+
+// Восстановление символов из битовой строки с использованием дерева
+const decodeMessage = (encoded, huffmanTree) => {
+  let result = "";
+  let node = huffmanTree;
+  for (let bit of encoded) {
+    node = bit === "0" ? node[0][0] : node[0][1];
+    if (typeof node[0] === "string") {
+      result += node[0]; // Добавляем символ к результату
+      node = huffmanTree; // Возвращаемся в корень дерева
+    }
+  }
+  return result;
+};
+
+// Сериализация дерева Хаффмана для передачи
+const serializeTree = (node) => JSON.stringify(node, null);
+
+// Десериализация дерева Хаффмана из строки
+const deserializeTree = (str) => JSON.parse(str);
+
+// Демонстрация кодирования и декодирования
+function printInformation() {
   const strings = ["ВБВБВАВБАВ", "Мама мыла раму"];
   strings.forEach((value) => {
     const start = performance.now();
     console.log(`Исходная строка: ${value}`);
-    console.log("Дерево: ");
+
+    // Построение кодового дерева
     const huffmanTree = tree(sortps(topairs(freqs(value))));
-    prettyPrintTree(huffmanTree);
-    // console.log(JSON.stringify(huffmanTree, null, 2));
-    console.log(`Коды символов:`);
-    console.log(codes(huffmanTree));
+    const huffmanCodes = codes(huffmanTree);
+
+    console.log("Коды символов:");
+    console.log(huffmanCodes);
+
+    // Кодирование сообщения
+    const encodedMessage = encodeMessage(value, huffmanCodes);
+    console.log(`Закодированное сообщение: ${encodedMessage}`);
+
+    // Сериализация дерева
+    const serializedTree = serializeTree(huffmanTree);
+    console.log(`Сериализованное дерево: ${serializedTree}`);
+
+    // Передача закодированного сообщения и дерева
+    const transmittedData = { encodedMessage, tree: serializedTree };
+
+    // Декодирование сообщения
+    const deserializedTree = deserializeTree(transmittedData.tree);
+
+    const decodedMessage = decodeMessage(
+      transmittedData.encodedMessage,
+      deserializedTree
+    );
+    console.log(`Декодированное сообщение: ${decodedMessage}`);
+
     const end = performance.now();
-    console.log(`Время выполнения кода: ${end - start} `);
+    console.log(`Время выполнения кода: ${end - start} ms\n`);
   });
 }
-printInfromation();
+
+printInformation();
