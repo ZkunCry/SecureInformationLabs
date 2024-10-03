@@ -49,6 +49,7 @@ const decodeMessage = (encoded, huffmanTree) => {
   let node = huffmanTree;
   for (let bit of encoded) {
     node = bit === "0" ? node[0][0] : node[0][1];
+
     if (typeof node[0] === "string") {
       result += node[0]; // Добавляем символ к результату
       node = huffmanTree; // Возвращаемся в корень дерева
@@ -65,11 +66,10 @@ const deserializeTree = (str) => JSON.parse(str);
 
 // Демонстрация кодирования и декодирования
 function printInformation() {
-  const strings = ["ВБВБВАВБАВ", "Мама мыла раму"];
+  const strings = ["ВБВБВАВБАВ", "Мама мыла раму", "abcd"];
   strings.forEach((value) => {
-    const start = performance.now();
     console.log(`Исходная строка: ${value}`);
-
+    console.log("Массив частот: ", topairs(freqs(value)));
     // Построение кодового дерева
     const huffmanTree = tree(sortps(topairs(freqs(value))));
     const huffmanCodes = codes(huffmanTree);
@@ -96,10 +96,8 @@ function printInformation() {
       deserializedTree
     );
     console.log(`Декодированное сообщение: ${decodedMessage}`);
-
-    const end = performance.now();
-    console.log(`Время выполнения кода: ${end - start} ms\n`);
   });
 }
 
 printInformation();
+console.log(freqs("Тест"));
